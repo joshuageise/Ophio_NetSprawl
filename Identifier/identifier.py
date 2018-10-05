@@ -1,5 +1,6 @@
 import subprocess
 import re
+import json
 
 """
 This regex looks like complete gibbrish, but when run on the "ip a" command should produce the following output:
@@ -22,16 +23,18 @@ The third parameter is a speed parameter, on a scale of 0-5. 5 is probably a bad
 
 returns an array of ip addresses as strings
 """
-def scanNetworkNMAP(ipAddress:str, subnet:str, speed:str):
+def scanNetworkNMAP(ipAddress:str, subnet:str, speed:str="3"):
     output = subprocess.check_output(["nmap", "-T{}".format(speed), "-sn", "{}/{}".format(ipAddress, subnet)]).decode("utf-8")
     ipAddresses = []
     for line in output.split("\n"):
         if "Nmap scan report" in line:
             ipAddresses.append(line.split(" ")[-1])
 
-    print(output)
-    print(ipAddresses)
     return ipAddresses
+
+def scanNetworkNMAPCIDR(cidrAddress:str, speed:str="3"):
+    split = cidrAddress.split("/")
+    return scanNetworkNMAP(split[0], split[1], speed)
 
 """
 Stub function for now, could be a long-form version of scanNetworkNMAP
@@ -47,15 +50,24 @@ returns a list of lists specified in ip_a_regex
 def getNetworkInformation():
     output = subprocess.check_output(["ip", "a"]).decode("utf-8")
     pattern = re.compile(ip_a_regex())
-    print(output)
     matches = pattern.findall(output)
     toReturn = []
     for match in matches:
         toReturn.append(list(match))
-    print(toReturn)
     return toReturn
+
+def scanCurrentNetwork():
+    netInfo = getNetworkInformation()
+    hosts = []
+    for network in netInfo:
+        networkDict = {"network": network[2]}
+        networkHosts = scanNetworkNMAPCIDR(network[2])
+        networkDict["hosts"] = networkHosts
+        hosts.append(networkDict)
+    return json.dumps(hosts)
 
 
 
 #scanNetwork("192.168.1.0", "24")
-getNetworkInformation()
+#getNetworkInformation()
+print(scanCurrentNetwork())
