@@ -1,1 +1,1 @@
-from hostdiscovery.hostdiscovery import scanFuncs
+from hostdiscovery.hostdiscovery import scanFuncs, scanCIDRFuncs
