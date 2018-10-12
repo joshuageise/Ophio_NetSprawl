@@ -1,6 +1,8 @@
 import subprocess
 import re
 import json
+import hostdiscovery
+import networkinfo
 
 """
 This regex looks like complete gibbrish, but when run on the "ip a" command should produce the following output:
@@ -23,6 +25,7 @@ The third parameter is a speed parameter, on a scale of 0-5. 5 is probably a bad
 
 returns an array of ip addresses as strings
 """
+"""
 def scanNetworkNMAP(ipAddress:str, subnet:str, speed:str="3"):
     output = subprocess.check_output(["nmap", "-T{}".format(speed), "-sn", "{}/{}".format(ipAddress, subnet)]).decode("utf-8")
     ipAddresses = []
@@ -35,39 +38,32 @@ def scanNetworkNMAP(ipAddress:str, subnet:str, speed:str="3"):
 def scanNetworkNMAPCIDR(cidrAddress:str, speed:str="3"):
     split = cidrAddress.split("/")
     return scanNetworkNMAP(split[0], split[1], speed)
-
 """
-Stub function for now, could be a long-form version of scanNetworkNMAP
-"""
-def scanNetwork(ipAddress:str, subnet:str, speed:str):
-    scanNetworkNMAP(ipAddress, subnet, speed)
-
-"""
-getNetwork information takes no parameters
-
-returns a list of lists specified in ip_a_regex
-"""
-def getNetworkInformation():
-    output = subprocess.check_output(["ip", "a"]).decode("utf-8")
-    pattern = re.compile(ip_a_regex())
-    matches = pattern.findall(output)
-    toReturn = []
-    for match in matches:
-        toReturn.append(list(match))
-    return toReturn
 
 def scanCurrentNetwork():
-    netInfo = getNetworkInformation()
+    interfaces = []
+    for func in networkinfo.netFuncs:
+        try:
+            interfaces = func()
+            break
+        except:
+            continue
     hosts = []
-    for network in netInfo:
-        networkDict = {"network": network[2]}
-        networkHosts = scanNetworkNMAPCIDR(network[2])
-        networkDict["hosts"] = networkHosts
-        hosts.append(networkDict)
-    return json.dumps(hosts)
+    for interface in interfaces:
+        for func in hostdiscovery.scanFuncs:
+            try:
+                networkDict = {"network": interface[2]}
+                networkHosts = func(interface[2])
+                networkDict["hosts"] = networkHosts
+                hosts.append(networkDict)
+                return json.dumps(hosts)
+            except:
+                continue
 
 
 
 #scanNetwork("192.168.1.0", "24")
 #getNetworkInformation()
-print(scanCurrentNetwork())
+print(hostdiscovery.scanFuncs)
+
+

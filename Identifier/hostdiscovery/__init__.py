@@ -1,0 +1,1 @@
+from hostdiscovery.hostdiscovery import scanFuncs
