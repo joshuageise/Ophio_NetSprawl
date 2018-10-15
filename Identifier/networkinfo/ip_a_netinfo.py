@@ -1,4 +1,5 @@
 import subprocess
+import re
 
 """
 This regex looks like complete gibbrish, but when run on the "ip a" command should produce the following output:
