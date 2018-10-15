@@ -30,4 +30,8 @@ def scanHostForInfo(ipAddress:str):
     return json.dumps(ports)
 
 def scanHostsForInfo(ipAddresses:list):
-    pass
+    host_info = []
+    for ipAddress in ipAddresses:
+        info = scanHostForInfo(ipAddress)
+        host_info.append(info)
+    return host_info
