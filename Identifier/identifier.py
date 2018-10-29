@@ -1,6 +1,6 @@
 import json
-import hostdiscovery
-import networkinfo
+import Identifier.hostdiscovery as hostdiscovery
+import Identifier.networkinfo as networkinfo
 
 def scanCurrentNetwork():
     interfaces = []
