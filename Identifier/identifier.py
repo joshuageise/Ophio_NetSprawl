@@ -18,6 +18,6 @@ def scanCurrentNetwork():
                 networkHosts = func(interface[2])
                 networkDict["hosts"] = networkHosts
                 hosts.append(networkDict)
-                return json.dumps(hosts)
             except:
                 continue
+    return json.dumps(hosts)
