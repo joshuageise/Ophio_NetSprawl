@@ -3,6 +3,8 @@
 from flask import Flask, request, render_template
 app = Flask(__name__)
 
+#from .identifier import identifier
+
 @app.route('/')
 def root():
     return render_template('index.html')
@@ -27,7 +29,15 @@ def receive():
         # return a 200
         return "received", 200
 
-#@app.route('/id', methods=['GET', 'POST'])
-#def id():
-    
+@app.route('/do')
+def todo():
+    todo = request.args.get('do')
+    if todo == 'Identifier':
+        return 'ID time'
+    elif todo == 'Enricher':
+        return 'Do the enricher'
+    elif todo == 'Exploiter':
+        return 'Start exploit'
+    else:
+        return 'Error: input incorrect'
 
