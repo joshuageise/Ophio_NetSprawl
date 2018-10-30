@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def root():
-    return "Test endpoint."
+    return render_template('index.html')
 
 @app.route('/receive', methods=['GET', 'POST'])
 def receive():
@@ -26,3 +26,8 @@ def receive():
 
         # return a 200
         return "received", 200
+
+#@app.route('/id', methods=['GET', 'POST'])
+#def id():
+    
+
