@@ -1,0 +1,1 @@
+from .hostdiscovery import scanFuncs, scanCIDRFuncs
