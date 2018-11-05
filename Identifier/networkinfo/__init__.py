@@ -1,1 +1,0 @@
-from .networkinfo import netFuncs

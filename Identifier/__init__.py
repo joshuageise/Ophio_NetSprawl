@@ -1,1 +1,0 @@
-from .identifier import scanCurrentNetwork
