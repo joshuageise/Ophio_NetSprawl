@@ -7,8 +7,14 @@
 <div>
 	<form action="/do" method="GET">
 		<input type="submit" name="do" value="Identifier"/>
-		<input type="submit" name="do" value="Enricher" />
 		<input type="submit" name="do" value="Exploiter" />
+                <input type="text" name="host" value=""/>
+                <input type="submit" value="Enricher" />
+
+	</form>
+	<form action="/enrich" method="GET">
+                <input type="text" name="host" value=""/>
+		<input type="submit" value="Enricher" />
 	</form>
 
 </body>

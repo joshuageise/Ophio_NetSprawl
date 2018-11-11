@@ -6,6 +6,14 @@ app = Flask(__name__)
 import sys
 import os
 import Identifier
+import Enricher
+import Exploiter
+from pymongo import MongoClient
+
+
+client = MongoClient()
+db = client['Net_Map']
+Net_map = db.Net_Map
 
 @app.route('/')
 def root():
@@ -34,13 +42,25 @@ def receive():
 @app.route('/do')
 def todo():
     todo = request.args.get('do')
+    host = request.args.get('host')
     if todo == 'Identifier':
         cool = Identifier.scanCurrentNetwork()
+        #Net_map.insert_one(str(cool))
         return str(cool)
     elif todo == 'Enricher':
-        return test()
+        if host!='':
+            rich = Enricher.scanHostForInfo(host)
+            return str(rich)
+        else:
+            return 'Error: Enicher'
     elif todo == 'Exploiter':
         return 'Start exploit'
     else:
-        return 'Error: input incorrect'
+        rich = Enricher.scanHostForInfo(host)
+        return str(rich)
+
+        #return 'Error: input incorrect'
+
+
+
 
