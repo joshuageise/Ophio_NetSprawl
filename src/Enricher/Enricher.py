@@ -1,5 +1,5 @@
-import Enricher.osscan
-import Enricher.portscan
+import Enricher.osscan as osscan
+import Enricher.portscan as portscan
 import json
 
 def scanHostForInfo(ipAddress:str):
