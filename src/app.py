@@ -8,12 +8,15 @@ import os
 import Identifier
 import Enricher
 import Exploiter
+import json
 from pymongo import MongoClient
 
 
 client = MongoClient()
-db = client['Net_Map']
-Net_map = db.Net_Map
+db = client["NetSprawl"]
+Net_map = db["Map"]
+exploits = db["Exploit"]
+
 
 @app.route('/')
 def root():
@@ -45,22 +48,15 @@ def todo():
     host = request.args.get('host')
     if todo == 'Identifier':
         cool = Identifier.scanCurrentNetwork()
-        #Net_map.insert_one(str(cool))
-        return str(cool)
-    elif todo == 'Enricher':
-        if host!='':
-            rich = Enricher.scanHostForInfo(host)
-            return str(rich)
-        else:
-            return 'Error: Enicher'
+        x = json.loads(cool)
+        Net_map.insert(x)
+        return cool
+    elif host != '':
+        rich = Enricher.scanHostForInfo(host)
+        return str(rich)
     elif todo == 'Exploiter':
         return 'Start exploit'
     else:
-        rich = Enricher.scanHostForInfo(host)
-        return str(rich)
-
-        #return 'Error: input incorrect'
-
-
+        return 'Error: input incorrect'
 
 
