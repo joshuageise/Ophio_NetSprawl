@@ -14,11 +14,15 @@ def ip_a_regex():
     return r"\d: (.*):.*\n\s*link.* (.*) brd.*\n\s*inet ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/[0-9]+) " \
            "(?:brd)? ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)"
 
-def ip_a_netinfo():
-    output = subprocess.check_output(["ip", "a"]).decode("utf-8")
+def ip_a_parse(output:str):
     pattern = re.compile(ip_a_regex())
     matches = pattern.findall(output)
     toReturn = []
     for match in matches:
         toReturn.append(list(match))
     return toReturn
+
+def ip_a_netinfo():
+    output = subprocess.check_output(["ip", "a"]).decode("utf-8")
+    return ip_a_parse(output)
+
