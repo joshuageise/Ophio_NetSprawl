@@ -1,1 +1,1 @@
-from .Enricher import scanHostForInfo
+from .enricher import scanHostForInfo
