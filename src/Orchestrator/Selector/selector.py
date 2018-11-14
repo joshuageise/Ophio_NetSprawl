@@ -6,7 +6,7 @@ import strategies
 # - list of open ports
 ###
 
-def selectExploit(strategy, target_data:dict):
+def selectExploit(strategy, target_data:list):
     # get list of exploits
     # try in order, call update after each
     # loop until success or none left
