@@ -26,8 +26,8 @@ def scanHostForInfo(ipAddress:str):
             break
         except:
             continue
-    ports.insert(0, os)
-    return json.dumps(ports)
+    output = [os, ports]
+    return json.dumps(output)
 
 def scanHostsForInfo(ipAddresses:list):
     host_info = []
