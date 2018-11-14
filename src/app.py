@@ -3,13 +3,13 @@
 from flask import Flask, request, render_template
 app = Flask(__name__)
 
-import sys
-import os
 import Identifier
 import Enricher
 import Exploiter
+
 import json
 from pymongo import MongoClient
+from metasploit.msfrpc import MsfRpcClient
 
 
 client = MongoClient()
@@ -46,17 +46,23 @@ def receive():
 def todo():
     todo = request.args.get('do')
     host = request.args.get('host')
+    target = request.args.get('target')
+    exploit = request.args.get('exploit')
+
     if todo == 'Identifier':
-        cool = Identifier.scanCurrentNetwork()
-        x = json.loads(cool)
-        Net_map.insert(x)
-        return cool
-    elif host != '':
-        rich = Enricher.scanHostForInfo(host)
-        return str(rich)
-    elif todo == 'Exploiter':
-        return 'Start exploit'
+        identifyResults = Identifier.scanCurrentNetwork()
+        identifyDict = json.loads(identifyResults)
+        Net_map.insert(identifyDict)
+        return identifyResults
+
+    elif todo == 'Enricher' and host != '':
+        enrichResults = Enricher.scanHostForInfo(host)
+        return str(enrichResults)
+
+    elif todo == 'Exploiter' and target != '' and exploit != '':
+        msClient = MsfRpcClient() #maybe more?
+        exploitResults = Exploiter.callExploit(msClient, exploit, target)
+        return str(exploitResults)
+
     else:
         return 'Error: input incorrect'
-
-
