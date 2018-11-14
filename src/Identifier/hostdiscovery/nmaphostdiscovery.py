@@ -14,7 +14,7 @@ def scanNetworkNMAP(ipAddress:str, subnet:str, speed:str="3"):
     ipAddresses = []
     for line in output.split("\n"):
         if "Nmap scan report" in line:
-            ipAddresses.append(line.split(" ")[-1])
+            ipAddresses.append(line.split(" ")[-1].strip("()"))
 
     return ipAddresses
 
