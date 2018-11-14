@@ -60,7 +60,7 @@ def todo():
         return str(enrichResults)
 
     elif todo == 'Exploiter' and target != '' and exploit != '':
-        msClient = MsfRpcClient() #maybe more?
+        msClient = MsfRpcClient("pass")
         exploitResults = Exploiter.callExploit(msClient, exploit, target)
         return str(exploitResults)
 
