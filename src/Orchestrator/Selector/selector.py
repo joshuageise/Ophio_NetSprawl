@@ -1,4 +1,6 @@
+import ../Exploiter
 import strategies
+from metasploit.msfrpc import MsfRpcClient
 
 ###
 # current feature set:
@@ -6,7 +8,7 @@ import strategies
 # - list of open ports
 ###
 
-def selectExploit(strategy, target_data:list):
+def selectExploit(strategy:strategies.Strategy, msfClient:MsfRpcClient, target_data:list):
     # get list of exploits
     # try in order, call update after each
     # loop until success or none left
@@ -18,11 +20,11 @@ def selectExploit(strategy, target_data:list):
         if result:
             break
 
-    # debug output
-    if result:
-        print("successfully exploited a thing")
-    else:
-        print("could not exploit the thing")
+    ### debug output
+    # if result:
+    #     print("successfully exploited a thing")
+    # else:
+    #     print("could not exploit the thing")
 
     return result #or whatever else callExploit() returns
 

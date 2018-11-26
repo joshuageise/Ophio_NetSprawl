@@ -4,9 +4,9 @@ import Orchestrator.Selector as Selector
 import Exploiter
 from record import Record
 
-import pymongo
+from pymongo import MongoClient
 from metasploit.msfrpc import MsfRpcClient
-import json
+from json import loads
 
 def main():
     ### setup
@@ -32,7 +32,7 @@ def main():
     exploitQueue = []
     postexQueue = []
 
-    strategy = Selector.Default_Strategy(Exploiter.exploitNames)
+    strategy = Selector.Default_Strategy(Exploiter.getExploitNames())
 
     log_file = open("ophio_log.txt", 'a')
 
@@ -54,14 +54,19 @@ def main():
                 hostsDiscovered.append(hostIp)
 
     rootHost = Record(rootInterfaces, None)
-    # TODO insert rootHost.toDict() to db, generate + store id
     rootHost.exploitStatus["statusCode"] = Record.STATUS_SUCCESS
     rootHost.exploitStatus["exploitUsed"] = "N/A"
+    record = rootHost.toDict()
+    netMapTable.insert(record)
+    rootHost.id = record["_id"]
     hostCollection.append(rootHost)
     enrichQueue.append(rootHost)
+
     for hostIp in hostsDiscovered:
         hostRecord = Record([hostIp], rootHost.id)
-        # TODO insert hostRecord.toDict() to db, generate + store id
+        record = hostRecord.toDict()
+        netMapTable.insert(record)
+        hostRecord.id = record["_id"]
         hostCollection.append(hostRecord)
         enrichQueue.append(hostRecord)
 
@@ -76,8 +81,8 @@ def main():
         enrichResults = json.loads(Enricher.scanHostForInfo(hostRecord.interfaces))
         hostRecord.os = enrichResults[0]
         hostRecord.openPorts = enrichResults[1:]
-        # TODO update hostRecord, filtering by hostRecord.id
-        exploitQueue.append(host)
+        # TODO update hostRecord in netMapTable, filtering by hostRecord.id
+        exploitQueue.append(hostRecord)
 
 
 
@@ -89,14 +94,27 @@ def main():
 
     while len(exploitQueue) > 0:
         hostRecord = exploitQueue.pop()
-
+        hostData = [hostRecord.os,
+        exploitResults = Selector.selectExploit(strategy, msfClient, hostData) # might be simpler to pull that functionality here
+        if exploitResults = None:
+            hostRecord.exploitStatus["statusCode"] = 2
+        else:
+            hostRecord.exploitStatus = {
+                "statusCode": 1,
+                "exploitUsed": exploitResults["uuid"], # gotta grab this somehow
+                "msSessionId": exploitResults["jobid"]
+            }
+        # TODO update hostRecord in netMapTable
+        postexQueue.append(hostRecord)
 
 
     ### post-exploits
     # drop and run identifier on exploited boxes
     # add new hosts to records + database
     # enrich and exploit new hosts as usual
-
+    while len(postexQueue) > 0:
+        hostRecord = postexQueue.pop()
+        print(hostRecord)
 
 
 
