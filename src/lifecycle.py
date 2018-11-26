@@ -1,21 +1,29 @@
 import Identifier
 import Enricher
-import Orchestrator
+import Orchestrator.Selector as Selector
 import Exploiter
 from record import Record
 
 import pymongo
 from metasploit.msfrpc import MsfRpcClient
+import json
 
 def main():
     ### setup
-    # check for dependencies? - nmap, ms, mongo
+    # check for dependencies - nmap, ms, mongo
     # check for legally scanned network?
-    # copy + zip identifier for post-exploits?
-    # initialize pointers for orchestration
+    # initialize structures for orchestration
     # connect to database
+    # connect to msf rpc
     # initialize exploits + data for selector
     # initialize logging
+
+    dbClient = pymongo.MongoClient()
+    dbRef = dbClient["NetSprawl"]
+    netMapTable = dbRef["Map"]
+    exploitTable = dbRef["Exploits"] # TODO export weights from Selector
+
+    msfClient = MsfRpfClient("pass")
 
     hostCollection = []
     rootHost = None
@@ -24,9 +32,9 @@ def main():
     exploitQueue = []
     postexQueue = []
 
-    # TODO connect to mango
+    strategy = Selector.Default_Strategy(Exploiter.exploitNames)
 
-    # strategy = ...
+    log_file = open("ophio_log.txt", 'a')
 
 
 
@@ -36,7 +44,7 @@ def main():
     # identify root node
     # add host records to database
 
-    identifyResults = Identifier.scanCurrentNetwork()
+    identifyResults = json.loads(Identifier.scanCurrentNetwork())
     rootInterfaces = []
     hostsDiscovered = []
     for network in identifyResults:
@@ -65,7 +73,7 @@ def main():
 
     while len(enrichQueue) > 0:
         hostRecord = enrichQueue.pop()
-        enrichResults = Enricher.scanHostForInfo(hostRecord.interfaces)
+        enrichResults = json.loads(Enricher.scanHostForInfo(hostRecord.interfaces))
         hostRecord.os = enrichResults[0]
         hostRecord.openPorts = enrichResults[1:]
         # TODO update hostRecord, filtering by hostRecord.id
@@ -98,6 +106,12 @@ def main():
     # b) single queue, each host evaluated straight through
     #
     # identifiers should be rerun periodically to identify new hosts
+    #
+    # alternative: run once, and restore state from DB info on startup
+
+    ### logging and reporting
+    # writing activities to a log file from lifecycle is a decent start
+    # function (seperate script?) to produce report on network map & status from memory state or db records
 
 if __name__ == '__main__':
     main()
