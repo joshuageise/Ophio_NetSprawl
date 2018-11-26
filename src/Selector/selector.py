@@ -1,4 +1,4 @@
 import Selector.strategies
 
-defaultStrategy = strategies.PortNumStrategy
-strategies = [strategies.PortNumStrategy, strategies.RandomStrategy, strategies.Strategy]
+defaultStrategy = Selector.strategies.PortNumStrategy
+strategies = [Selector.strategies.PortNumStrategy, Selector.strategies.RandomStrategy, Selector.strategies.Strategy]
