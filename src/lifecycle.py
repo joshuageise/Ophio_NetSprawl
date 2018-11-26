@@ -6,7 +6,7 @@ from record import Record
 
 from pymongo import MongoClient
 from metasploit.msfrpc import MsfRpcClient
-from json import loads
+import json
 
 def main():
     ### setup
