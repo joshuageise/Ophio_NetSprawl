@@ -1,6 +1,6 @@
 import Identifier
 import Enricher
-import Orchestrator.Selector as Selector
+import Selector
 import Exploiter
 from record import Record
 
@@ -23,7 +23,7 @@ def main():
     netMapTable = dbRef["Map"]
     exploitTable = dbRef["Exploits"] # TODO export weights from Selector
 
-    msfClient = MsfRpfClient("pass")
+    msfClient = MsfRpcClient("pass")
 
     hostCollection = []
     rootHost = None
