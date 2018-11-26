@@ -11,7 +11,7 @@ class Record:
         self.os = None
         self.openPorts = None
         self.exploitStatus = {
-            "statusCode": STATUS_UNEXPLORED,
+            "statusCode": self.STATUS_UNEXPLORED,
             "exploitUsed": None,
             "msSessionId": None
         }
