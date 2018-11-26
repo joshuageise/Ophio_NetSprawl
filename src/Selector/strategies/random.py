@@ -1,7 +1,7 @@
 from .strategy import Strategy
 import random
 
-class Random_Strategy(Strategy):
+class RandomStrategy(Strategy):
     """ Recommends exploits in a random order. """
 
     def __init__(self, exploits:list):

@@ -1,6 +1,6 @@
 from .strategy import Strategy
 
-class Port_Num_Strategy(Strategy):
+class PortNumStrategy(Strategy):
     """ Evaluates the list of open ports and recommends exploits based on prior success. """
 
     def __init__(self, exploits:list):
