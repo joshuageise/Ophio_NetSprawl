@@ -18,7 +18,7 @@ def main():
     # initialize exploits + data for selector
     # initialize logging
 
-    dbClient = pymongo.MongoClient()
+    dbClient = MongoClient()
     dbRef = dbClient["NetSprawl"]
     netMapTable = dbRef["Map"]
     exploitTable = dbRef["Exploits"] # TODO export weights from Selector
