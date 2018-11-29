@@ -12,7 +12,6 @@ class PortNumStrategy(Strategy):
     def search(self, target_data:list):
         weight_sums = {}
 
-        print(target_data)
         for exploit in self.weights:
             weight_sums[exploit] = 0
             if len(target_data) > 1:
