@@ -46,6 +46,7 @@ def main():
         # add host records to database
 
         # can skip if prev cycle identified new hosts
+        print("Identifying...")
         if len(enrichQueue) == 0:
             identifyResults = json.loads(Identifier.scanCurrentNetwork())
             rootInterfaces = []
@@ -81,12 +82,13 @@ def main():
         # log results of scans
         # append information to host records in database
 
+        print("Enriching...")
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
             enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces)[0])
             # TODO concatenate results if there are multiple interfaces on a host
             hostRecord.os = enrichResults[0]
-            hostRecord.openPorts = enrichResults[1:]
+            hostRecord.openPorts = enrichResults[1:] if len(enrichResults) > 1 else []
             # TODO update hostRecord in netMapTable, filtering by hostRecord.id
             exploitQueue.append(hostRecord)
 
@@ -98,6 +100,7 @@ def main():
         # log results and update selector after each exploit run
         # append exploit status (exploit used, MS session) to host records
 
+        print("Exploiting...")
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
             hostIp = hostRecord.interfaces[0]
@@ -128,6 +131,8 @@ def main():
         # drop and run identifier on exploited boxes
         # add new hosts to records + database
         # enrich and exploit new hosts as usual
+
+        print("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
             print(hostRecord)
