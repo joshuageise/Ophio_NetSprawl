@@ -66,7 +66,8 @@ def main():
             enrichQueue.append(rootHost)
 
         for hostIp in hostsDiscovered:
-            # TODO check for duplicates
+            # TODO check for duplicates first
+
             hostRecord = Record([hostIp], rootHost.id)
             record = hostRecord.toDict()
             netMapTable.insert(record)
@@ -82,9 +83,10 @@ def main():
 
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
-            enrichResults = json.loads(Enricher.scanHostForInfo(hostRecord.interfaces))
-            hostRecord.os = enrichResults[0]
-            hostRecord.openPorts = enrichResults[1:]
+            enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces))
+            # TODO concatenate results if there are multiple interfaces on a host
+            hostRecord.os = enrichResults[0][0]
+            hostRecord.openPorts = enrichResults[0][1:]
             # TODO update hostRecord in netMapTable, filtering by hostRecord.id
             exploitQueue.append(hostRecord)
 
