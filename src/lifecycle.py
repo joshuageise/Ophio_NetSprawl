@@ -83,10 +83,10 @@ def main():
 
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
-            enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces))
+            enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces)[0])
             # TODO concatenate results if there are multiple interfaces on a host
-            hostRecord.os = enrichResults[0][0]
-            hostRecord.openPorts = enrichResults[0][1:]
+            hostRecord.os = enrichResults[0]
+            hostRecord.openPorts = enrichResults[1:]
             # TODO update hostRecord in netMapTable, filtering by hostRecord.id
             exploitQueue.append(hostRecord)
 
