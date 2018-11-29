@@ -105,7 +105,7 @@ def main():
             hostRecord = exploitQueue.pop()
             hostIp = hostRecord.interfaces[0]
             hostData = hostRecord.openPorts.insert(0, hostRecord.os) # ensure this isn't modifying the record
-            print(hostRecord) #debug
+            print(hostRecord.toDict()) #debug
             exploitOrder = strategy.search(hostData)
 
             for exploit in exploitOrder:
