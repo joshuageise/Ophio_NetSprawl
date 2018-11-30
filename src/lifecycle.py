@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from metasploit.msfrpc import MsfRpcClient
 import json
 import time
+import copy
 
 def main():
     ### setup
@@ -104,8 +105,9 @@ def main():
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
             hostIp = hostRecord.interfaces[0]
-            hostData = hostRecord.openPorts.insert(0, hostRecord.os) # ensure this isn't modifying the record
-            print(hostRecord.toDict()) #debug
+            hostData = copy.copy(hostRecord.openPorts)
+            hostData.insert(0, hostRecord.os)
+            # print(hostRecord.toDict()) #debug
             exploitOrder = strategy.search(hostData)
 
             for exploit in exploitOrder:
