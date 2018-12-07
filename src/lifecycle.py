@@ -38,11 +38,15 @@ def main():
 
     logger = logging.getLogger("Ophio")
     logger.setLevel(logging.INFO)
-    fh = logging.fileHandler("ophio.log")
-    ch = logging.streamHandler()
+    fh = logging.FileHandler("ophio.log")
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
     logger.addHandler(fh)
     logger.addHandler(ch)
 
+
+
+    # main loop
     while True:
         ### identifier
         # call scanCurrentNetwork on initial host
@@ -71,14 +75,19 @@ def main():
             enrichQueue.append(rootHost)
 
         for hostIp in hostsDiscovered:
-            # TODO check for duplicates first
+            uniqueIp = True
+            for record in hostCollection:
+                if hostIp in record.interfaces:
+                    uniqueIp = False
 
-            hostRecord = Record([hostIp], rootHost.id)
-            record = hostRecord.toDict()
-            netMapTable.insert(record)
-            hostRecord.id = record["_id"]
-            hostCollection.append(hostRecord)
-            enrichQueue.append(hostRecord)
+            if uniqueIp:
+                hostRecord = Record([hostIp], rootHost.id)
+                record = hostRecord.toDict()
+                netMapTable.insert(record)
+                hostRecord.id = record["_id"]
+                hostCollection.append(hostRecord)
+                enrichQueue.append(hostRecord)
+
 
 
         ### enricher
