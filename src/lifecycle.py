@@ -11,6 +11,7 @@ import json
 import time
 import copy
 import logging
+import traceback # for debug
 
 def main():
     ### setup
@@ -145,8 +146,9 @@ def main():
                 try:
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     exploitSuccess = exploitResults["job_id"] != None
-                except Exception as err:
-                    logger.info("Exploit {} failed abnormally:\n  {}".format(exploit, err))
+                except Exception:
+                    logger.info("Exploit {} failed abnormally:".format(exploit))
+                    traceback.print_exc()
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
