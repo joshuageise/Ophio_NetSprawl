@@ -135,7 +135,7 @@ def main():
                 if exploitSuccess:
                     break
 
-            if exploitResults["job_id"] == None:
+            if exploitSuccess:
                 hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
             else:
                 hostRecord.exploitStatus = {
