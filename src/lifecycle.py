@@ -11,7 +11,7 @@ import json
 import time
 import copy
 import logging
-import traceback # for debug
+# import traceback # for debug
 
 def main():
     ### setup
@@ -147,8 +147,8 @@ def main():
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     exploitSuccess = exploitResults["job_id"] != None
                 except Exception:
-                    logger.info("Exploit {} failed abnormally:".format(exploit))
-                    traceback.print_exc()
+                    logger.info("Exploit {} failed abnormally.".format(exploit))
+                    # traceback.print_exc()
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
@@ -183,10 +183,11 @@ def main():
         # enrich and exploit new hosts as usual
 
         logger.info("Postexploiting...")
-        logger.info("No operations being performed. Records to parse:")
+        logger.info("Sessions available:")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
-            logger.info(hostRecord.toDict())
+            sessionDbg = {"IP": hostRecord.interfaces, "UUID": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus.["msSessionId"]}
+            logger.info(sessionDbg)
             # TODO modify networking as needed
             # TODO scan for new hosts
             # add results to enricher queue
