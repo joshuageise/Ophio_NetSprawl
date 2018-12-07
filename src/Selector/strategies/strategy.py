@@ -8,3 +8,6 @@ class Strategy:
 
     def update(self, target_data:dict, exploit_name:str, result:bool):
         pass
+
+    def export(self):
+        return {"strategy" : "none"}

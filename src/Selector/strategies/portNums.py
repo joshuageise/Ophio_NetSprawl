@@ -39,3 +39,7 @@ class PortNumStrategy(Strategy):
                     self.weights[exploit_name][port_num] = updated
 
             # print("port_nums update: weights = {}".format(self.weights))
+
+    """ returns a dict containing the strategy's state """
+    def export(self):
+        return {"strategy" : "port nums", "weights" : self.weights}

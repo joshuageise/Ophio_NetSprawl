@@ -12,3 +12,6 @@ class RandomStrategy(Strategy):
 
     def update(self, target_data:dict, weights:dict, exploit_name:str, result:bool):
         pass
+
+    def export(self):
+        return {"strategy" : "random", "exploits" : exploits}
