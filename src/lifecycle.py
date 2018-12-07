@@ -144,7 +144,7 @@ def main():
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     exploitSuccess = exploitResults["job_id"] != None
                 except Exception as err:
-                    logger.debug("Exploit {} failed abnormally:\n  {}".format(exploit, err))
+                    logger.info("Exploit {} failed abnormally:\n  {}".format(exploit, err))
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
@@ -154,7 +154,7 @@ def main():
                 logger.info("Failed to exploit host at IP {}".format(targetIp))
                 hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
             else:
-                loger.info("Successfully exploited host at IP {}".format(targetIp))
+                logger.info("Successfully exploited host at IP {}".format(targetIp))
                 hostRecord.exploitStatus = {
                     "statusCode": Record.STATUS_SUCCESS,
                     "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
