@@ -38,6 +38,10 @@ def main():
 
     logger = logging.getLogger("Ophio")
     logger.setLevel(logging.INFO)
+    fh = logging.fileHandler("ophio.log")
+    ch = logging.streamHandler()
+    logger.addHandler(fh)
+    logger.addHandler(ch)
 
     while True:
         ### identifier
