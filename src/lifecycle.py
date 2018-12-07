@@ -44,6 +44,8 @@ def main():
     logger.addHandler(fh)
     logger.addHandler(ch)
 
+    logger.info("Starting a new scan. Time: {}".format(time.time()))
+
 
 
     # main loop
@@ -54,8 +56,8 @@ def main():
         # identify root node
         # add host records to database
 
-        logger.info("Identifying...")
         if len(enrichQueue) == 0: # can skip if prev cycle has identified new hosts
+            logger.info("Identifying...")
             identifyResults = json.loads(Identifier.scanCurrentNetwork())
             rootInterfaces = []
             hostsDiscovered = []
@@ -65,6 +67,7 @@ def main():
                     hostsDiscovered.append(hostIp)
 
         if rootHost == None:
+            logger.info("Root host set to IP(s) {}".format(rootInterfaces))
             rootHost = Record(rootInterfaces, None)
             rootHost.exploitStatus["statusCode"] = Record.STATUS_SUCCESS
             rootHost.exploitStatus["exploitUsed"] = "N/A"
@@ -81,6 +84,7 @@ def main():
                     uniqueIp = False
 
             if uniqueIp:
+                logger.info("New host discovered at IP {}".format(hostIp))
                 hostRecord = Record([hostIp], rootHost.id)
                 record = hostRecord.toDict()
                 netMapTable.insert(record)
@@ -95,12 +99,10 @@ def main():
         # log results of scans
         # append information to host records in database
 
-        print("Enriching...")
+        logger.info("Enriching...")
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
-            if(hostRecord.interfaces == '[]'):
-                print("No Interfaces found")
-                return
+            logger.info("Scanning host at IP {}".format(hostRecord.interfaces))
             enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces)[0])
             # TODO concatenate results if there are multiple interfaces on a host
             hostRecord.os = enrichResults[0]
@@ -124,16 +126,19 @@ def main():
         # log results and update selector after each exploit run
         # append exploit status (exploit used, MS session) to host records
 
-        print("Exploiting...")
+        logger.info("Exploiting...")
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
+            logger.info("Profiling host at IP {}".format(hostRecord.interfaces))
             localIp = rootHost.interfaces[0]
             targetIp = hostRecord.interfaces[0]
             hostData = copy.copy(hostRecord.openPorts)
             hostData.insert(0, hostRecord.os)
             exploitOrder = strategy.search(hostData)
+            logger.debug("Recommended ordering: {}".format(exploitOrder))
 
             for exploit in exploitOrder:
+                logger.info("Attempting exploit {} against host at IP {}".format(exploit, targetIp))
                 try:
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     exploitSuccess = exploitResults["job_id"] != None
@@ -144,9 +149,11 @@ def main():
                 if exploitSuccess:
                     break
 
-            if exploitSuccess:
+            if not exploitSuccess:
+                logger.info("Failed to exploit host at IP {}".format(targetIp))
                 hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
             else:
+                loger.info("Successfully exploited host at IP {}".format(targetIp))
                 hostRecord.exploitStatus = {
                     "statusCode": Record.STATUS_SUCCESS,
                     "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
@@ -170,10 +177,11 @@ def main():
         # add new hosts to records + database
         # enrich and exploit new hosts as usual
 
-        print("Postexploiting...")
+        logger.info("Postexploiting...")
+        logger.info("No operations being performed. Records to parse:")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
-            print(hostRecord)
+            logger.info(hostRecord.toDict())
             # TODO modify networking as needed
             # TODO scan for new hosts
             # add results to enricher queue
@@ -183,11 +191,11 @@ def main():
         ### repetition
         # identifiers should be rerun periodically to identify new hosts
         # alternative: run once, and restore state from DB info on startup
-        print("Reached end of cycle.")
+        logger.info("Reached end of cycle.")
         # TODO save exploiter weights to database
         # TODO organize data for reports/next cycle
         if len(enrichQueue) == 0:
-            print("Nothing new to scan. Sleeping.")
+            logger.info("Nothing new to scan. Sleeping.")
             time.sleep(60)
 
 
