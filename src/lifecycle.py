@@ -67,8 +67,9 @@ def main():
                     hostsDiscovered.append(hostIp)
 
         if rootHost == None:
-            logger.info("Root host set to IP(s) {}".format(rootInterfaces))
-            rootHost = Record(rootInterfaces, None)
+            rootIps = [interface.split("/")[0] for interface in rootInterfaces] # remove CIDR notation
+            logger.info("Root host set to IP(s) {}".format(rootIps))
+            rootHost = Record(rootIps, None)
             rootHost.exploitStatus["statusCode"] = Record.STATUS_SUCCESS
             rootHost.exploitStatus["exploitUsed"] = "N/A"
             record = rootHost.toDict()
@@ -138,12 +139,12 @@ def main():
             logger.debug("Recommended ordering: {}".format(exploitOrder))
 
             for exploit in exploitOrder:
-                logger.info("Attempting exploit {} against host at IP {}".format(exploit, targetIp))
+                logger.info("Attempting exploit {} against host".format(exploit))
                 try:
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     exploitSuccess = exploitResults["job_id"] != None
-                except:
-                    print("Exploit {} failed abnormally.".format(exploit))
+                except Exception as err:
+                    logger.debug("Exploit {} failed abnormally:\n  {}".format(exploit, err))
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
