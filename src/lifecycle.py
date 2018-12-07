@@ -118,7 +118,6 @@ def main():
             targetIp = hostRecord.interfaces[0]
             hostData = copy.copy(hostRecord.openPorts)
             hostData.insert(0, hostRecord.os)
-            # print(hostRecord.toDict()) #debug
             exploitOrder = strategy.search(hostData)
 
             for exploit in exploitOrder:
@@ -140,7 +139,6 @@ def main():
                     "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
                     "msSessionId": exploitResults["job_id"]
                 }
-            print(hostRecord)
             # TODO make sure this update works
             netMapTable.update(
                 {'_id': hostRecord.id},
@@ -173,7 +171,7 @@ def main():
         # identifiers should be rerun periodically to identify new hosts
         # alternative: run once, and restore state from DB info on startup
         print("Reached end of cycle.")
-        if enrichQueue.isEmpty():
+        if len(enrichQueue) == 0:
             print("Nothing new to scan. Sleeping.")
             time.sleep(60)
 
