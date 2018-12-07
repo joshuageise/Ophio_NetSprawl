@@ -100,7 +100,8 @@ def main():
         # log results of scans
         # append information to host records in database
 
-        logger.info("Enriching...")
+        if len(enrichQueue) > 0:
+            logger.info("Enriching...")
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
             logger.info("Scanning host at IP {}".format(hostRecord.interfaces))
@@ -127,7 +128,8 @@ def main():
         # log results and update selector after each exploit run
         # append exploit status (exploit used, MS session) to host records
 
-        logger.info("Exploiting...")
+        if len(exploitQueue) > 0:
+            logger.info("Exploiting...")
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
             logger.info("Profiling host at IP {}".format(hostRecord.interfaces))
