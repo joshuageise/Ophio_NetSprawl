@@ -4,7 +4,7 @@ import Selector
 import Exploiter
 from record import Record
 
-from pymongo import MongoClient
+from pymongo import MongoClient, ReturnDocument
 from metasploit.msfrpc import MsfRpcClient
 import json
 import time
@@ -86,11 +86,22 @@ def main():
         print("Enriching...")
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
+            if(hostRecord.interfaces == '[]'):
+                print("No Interfaces found")
+                return
             enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces)[0])
             # TODO concatenate results if there are multiple interfaces on a host
             hostRecord.os = enrichResults[0]
             hostRecord.openPorts = enrichResults[1:] if len(enrichResults) > 1 else []
-            # TODO update hostRecord in netMapTable, filtering by hostRecord.id
+            netMapTable.update(
+                {'_id': hostRecord.id},
+                {'$set':
+                    {
+                        'os': hostRecord.os,
+                        'openPorts': hostRecord.openPorts
+                    }
+                 }
+            )
             exploitQueue.append(hostRecord)
 
 
@@ -114,7 +125,7 @@ def main():
             for exploit in exploitOrder:
                 exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                 exploitSuccess = exploitResults["job_id"] != None
-                strategy.update(hostData, exploit, exploitSuccess)
+                strategy.update(hostData, exploit, exploitSuccess) # TODO from Bill this thows an error "  File "/home/student/UGradCapstoneProject6/src/Selector/strategies/portNums.py", line 29, in update for port in target_data["ports"]:TypeError: list indices must be integers or slices, not str
                 if exploitSuccess:
                     break
 
@@ -126,7 +137,16 @@ def main():
                     "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
                     "msSessionId": exploitResults["job_id"]
                 }
-            # TODO update hostRecord in netMapTable
+            print(hostRecord)
+            # TODO make sure this update works
+            netMapTable.update(
+                {'_id': hostRecord.id},
+                {'$set':
+                    {
+                        "exploitStatus": hostRecord.exploitStatus
+                    }
+                }
+            )
             postexQueue.append(hostRecord)
 
 
