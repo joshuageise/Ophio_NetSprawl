@@ -6,14 +6,14 @@ from record import Record
 
 from pymongo import MongoClient, ReturnDocument
 from metasploit.msfrpc import MsfRpcClient
+
 import json
 import time
 import copy
+import logging
 
 def main():
     ### setup
-    # check for dependencies - nmap, ms, mongo
-    # check for legally scanned network?
     # initialize structures for orchestration
     # connect to database
     # connect to msf rpc
@@ -36,8 +36,8 @@ def main():
 
     strategy = Selector.defaultStrategy(Exploiter.getExploitNames())
 
-    log_file = open("ophio_log.txt", 'a') # TODO proper logging library, use throughout
-
+    logger = logging.getLogger("Ophio")
+    logger.setLevel(logging.INFO)
 
     while True:
         ### identifier
@@ -46,7 +46,7 @@ def main():
         # identify root node
         # add host records to database
 
-        print("Identifying...")
+        logger.info("Identifying...")
         if len(enrichQueue) == 0: # can skip if prev cycle has identified new hosts
             identifyResults = json.loads(Identifier.scanCurrentNetwork())
             rootInterfaces = []
@@ -127,7 +127,7 @@ def main():
                 except:
                     print("Exploit {} failed abnormally.".format(exploit))
                     exploitSuccess = False
-                strategy.update(hostData, exploit, exploitSuccess) # TODO from Bill this thows an error "  File "/home/student/UGradCapstoneProject6/src/Selector/strategies/portNums.py", line 29, in update for port in target_data["ports"]:TypeError: list indices must be integers or slices, not str
+                strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
                     break
 
@@ -163,7 +163,7 @@ def main():
             print(hostRecord)
             # TODO modify networking as needed
             # TODO scan for new hosts
-            # add results to
+            # add results to enricher queue
 
 
 
@@ -171,6 +171,8 @@ def main():
         # identifiers should be rerun periodically to identify new hosts
         # alternative: run once, and restore state from DB info on startup
         print("Reached end of cycle.")
+        # TODO save exploiter weights to database
+        # TODO organize data for reports/next cycle
         if len(enrichQueue) == 0:
             print("Nothing new to scan. Sleeping.")
             time.sleep(60)
