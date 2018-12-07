@@ -26,7 +26,7 @@ class PortNumStrategy(Strategy):
     """ increases weights for each port on exploit success, decreases on failure """
     def update(self, target_data:list, exploit_name:str, result:bool):
         if len(target_data) > 1:
-            for port in target_data["ports"]:
+            for port in target_data[1:]:
                 port_num = int(port["portNum"])
 
                 if result:

@@ -46,9 +46,8 @@ def main():
         # identify root node
         # add host records to database
 
-        # can skip if prev cycle identified new hosts
         print("Identifying...")
-        if len(enrichQueue) == 0:
+        if len(enrichQueue) == 0: # can skip if prev cycle has identified new hosts
             identifyResults = json.loads(Identifier.scanCurrentNetwork())
             rootInterfaces = []
             hostsDiscovered = []
@@ -123,8 +122,12 @@ def main():
             exploitOrder = strategy.search(hostData)
 
             for exploit in exploitOrder:
-                exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
-                exploitSuccess = exploitResults["job_id"] != None
+                try:
+                    exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
+                    exploitSuccess = exploitResults["job_id"] != None
+                except:
+                    print("Exploit {} failed abnormally.".format(exploit))
+                    exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess) # TODO from Bill this thows an error "  File "/home/student/UGradCapstoneProject6/src/Selector/strategies/portNums.py", line 29, in update for port in target_data["ports"]:TypeError: list indices must be integers or slices, not str
                 if exploitSuccess:
                     break
