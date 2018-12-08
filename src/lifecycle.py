@@ -183,21 +183,20 @@ def main():
         # enrich and exploit new hosts as usual
 
         logger.info("Postexploiting...")
-        logger.info("Sessions available:")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
             sessionDbg = {"IP": hostRecord.interfaces, "UUID": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus["msSessionId"]}
             logger.info(sessionDbg)
 
-            err, interfaces = Exploiter.callPostExploit(msfClient, "remote_host_netinfo", hostRecord.exploitStatus["msSessionId"])
-            if err == 0:
-                logger.info("Interfaces: {}".format(interfaces))
-            else:
-                logger.info("Unable to execute remote_host_netinfo against host")
-                
-            # TODO modify networking as needed
-            # TODO scan for new hosts
-            # add results to enricher queue
+            for postExploitAction in ["remote_host_netinfo", "remote_host_scan", "alter_network_routes"]:
+                results = Exploiter.callPostExploit(msfClient, postExploitAction, hostRecord.exploitStatus["msSessionId"])
+                logger.info("{}: {}".format(postExploitAction, results))
+                # if err == 0:
+                #     logger.info("{}: {}".format(postExploitAction, results))
+                # else:
+                #     logger.info("Unable to execute {} against host".format(postExploitAction))
+
+            # TODO add new hosts to collection and to enricher queue
 
 
 
