@@ -11,7 +11,7 @@ import json
 import time
 import copy
 import logging
-# import traceback # for debug
+import traceback # for debug
 
 def main():
     ### setup
@@ -149,7 +149,7 @@ def main():
                     exploitSuccess = msfSession != None
                 except Exception:
                     logger.info("Exploit {} failed abnormally.".format(exploit))
-                    # traceback.print_exc()
+                    traceback.print_exc()
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
@@ -168,6 +168,7 @@ def main():
                     "exploitUsed": exploitResults["uuid"], #exploit
                     "msfSessionId": msfSession["uuid"]
                 }
+                postexQueue.append(hostRecord)
 
             netMapTable.update(
                 {'_id': hostRecord.id},
@@ -177,7 +178,6 @@ def main():
                     }
                 }
             )
-            postexQueue.append(hostRecord)
 
 
 
