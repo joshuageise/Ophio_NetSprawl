@@ -145,7 +145,7 @@ def main():
                 logger.info("Attempting exploit {} against host".format(exploit))
                 try:
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
-                    msfSession = Exploiter.getSessionbyExploitUUID()
+                    msfSession = Exploiter.getSessionbyExploitUUID(msfClient, exploitResults["uuid"])
                     exploitSuccess = msfSession != None
                 except Exception:
                     logger.info("Exploit {} failed abnormally.".format(exploit))
