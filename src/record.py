@@ -13,7 +13,7 @@ class Record:
         self.exploitStatus = {
             "statusCode": self.STATUS_UNEXPLORED,
             "exploitUsed": None,
-            "msfSessionId": None
+            "msfSession": None
         }
 
     def toDict(self):

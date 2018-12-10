@@ -164,7 +164,7 @@ def main():
                 hostRecord.exploitStatus = {
                     "statusCode": Record.STATUS_SUCCESS,
                     "exploitUsed": exploit,
-                    "msfSessionId": msfSession["uuid"]
+                    "msfSession": msfSession
                 }
                 postexQueue.append(hostRecord)
 
@@ -188,11 +188,11 @@ def main():
             logger.info("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
-            sessionDbg = {"IP": hostRecord.interfaces, "Exploit Used": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus["msfSessionId"]}
+            sessionDbg = {"IP": hostRecord.interfaces, "Exploit Used": hostRecord.exploitStatus["exploitUsed"], "Session Num":hostRecord.exploitStatus["msfSession"]}
             logger.info(sessionDbg)
 
             for postExploitAction in ["remote_host_netinfo", "remote_host_scan", "alter_network_routes"]:
-                results = Exploiter.callPostExploitByUUID(msfClient, postExploitAction, hostRecord.exploitStatus["msfSessionId"])
+                results = Exploiter.callPostExploit(msfClient, postExploitAction, hostRecord.exploitStatus["msfSession"])
                 logger.info("{}: {}".format(postExploitAction, results))
                 # if err == 0:
                 #     logger.info("{}: {}".format(postExploitAction, results))
