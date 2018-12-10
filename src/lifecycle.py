@@ -147,16 +147,13 @@ def main():
                     exploitResults = Exploiter.callExploit(msfClient, exploit, targetIp, localIp)
                     msfSession = Exploiter.getSessionbyExploitUUID(msfClient, exploitResults["uuid"])
                     exploitSuccess = msfSession != None
-                except Exception:
-                    logger.info("Exploit {} failed abnormally.".format(exploit))
-                    traceback.print_exc()
+                except Exception as e:
+                    logger.info("Exploit {} failed abnormally - {}".format(exploit, e))
+                    # traceback.print_exc()
                     exploitSuccess = False
                 strategy.update(hostData, exploit, exploitSuccess)
                 if exploitSuccess:
                     break
-
-            # experiment
-            print(exploit)
 
             if not exploitSuccess:
                 logger.info("Failed to exploit host at IP {}".format(targetIp))
@@ -165,7 +162,7 @@ def main():
                 logger.info("Successfully exploited host at IP {}".format(targetIp))
                 hostRecord.exploitStatus = {
                     "statusCode": Record.STATUS_SUCCESS,
-                    "exploitUsed": exploitResults["uuid"], #exploit
+                    "exploitUsed": exploit,
                     "msfSessionId": msfSession["uuid"]
                 }
                 postexQueue.append(hostRecord)
@@ -186,7 +183,8 @@ def main():
         # add new hosts to records + database
         # enrich and exploit new hosts as usual
 
-        logger.info("Postexploiting...")
+        if len(postexQueue) > 0:
+            logger.info("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
             sessionDbg = {"IP": hostRecord.interfaces, "Exploit Used": hostRecord.exploitStatus["exploitUsed"], "Session ID":hostRecord.exploitStatus["msfSessionId"]}
