@@ -206,6 +206,7 @@ def main():
                             "interfaces": hostRecord.interfaces
                         }
                     }
+                )
 
                 # reconfigure routing to pass through
                 err = Exploiter.callPostExploit(msfClient, "alter_network_routes", session)
@@ -232,13 +233,16 @@ def main():
                             newIps.append(hostIp)
                     logger.info("New hosts discovered at IPs ".format(newIps))
 
-                    for newIp in newIps
+                    for newIp in newIps:
                         newRecord = Record([newIp], hostRecord.id)
                         record = newRecord.toDict()
                         netMapTable.insert(record)
                         newRecord.id = record["_id"]
                         hostCollection.append(newRecord)
                         enrichQueue.append(newRecord)
+
+        else:
+            logger.info("No new information gained from {}".format(hostRecord.interfaces))
 
 
 
