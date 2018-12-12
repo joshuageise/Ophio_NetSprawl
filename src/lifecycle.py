@@ -249,9 +249,15 @@ def main():
         ### end of cycle
         # identifiers should be rerun periodically to identify new hosts
         # alternative: run once, and restore state from DB info on startup
+
         logger.info("Reached end of cycle.")
-        # TODO save exploiter weights to database
+        # save exploiter weights to database
+        exploitTable.insert(strategy.export())
+
         # TODO save a report (if no new data?)
+
+
+        # sleep if no immediate work
         if len(enrichQueue) == 0:
             logger.info("Nothing new to scan. Sleeping.")
             time.sleep(60)
