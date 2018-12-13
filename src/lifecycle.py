@@ -105,7 +105,7 @@ def main():
         if len(enrichQueue) > 0:
             logger.info("Enriching...")
         while len(enrichQueue) > 0:
-            hostRecord = enrichQueue.pop()
+            hostRecord = enrichQueue.pop(0)
             processingCounter += 1
 
             logger.info("Scanning host at IP {}".format(hostRecord.interfaces))
@@ -136,7 +136,7 @@ def main():
         if len(exploitQueue) > 0:
             logger.info("Exploiting...")
         while len(exploitQueue) > 0:
-            hostRecord = exploitQueue.pop()
+            hostRecord = exploitQueue.pop(0)
             processingCounter += 1
 
             logger.info("Profiling host at IP {}".format(hostRecord.interfaces))
@@ -192,7 +192,7 @@ def main():
         if len(postexQueue) > 0:
             logger.info("Postexploiting...")
         while len(postexQueue) > 0:
-            hostRecord = postexQueue.pop()
+            hostRecord = postexQueue.pop(0)
             processingCounter += 1
             session = hostRecord.exploitStatus["msfSession"]
 
