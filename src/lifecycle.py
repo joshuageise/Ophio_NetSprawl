@@ -280,9 +280,10 @@ def main():
                 "hosts_found" : len(hostCollection),
                 "hosts_exploited" : hostsExploited,
                 "host_collection": [record.toCompat() for record in hostCollection],
-                "strategy_weights_id" : strategyWeights["_id"]
+                "strategy_weights_id" : str(strategyWeights["_id"])
 
             }
+
             with open("Reports/Report_{}.json".format(timestamp), "w") as reportFile:
                 reportFile.write(json.dumps(report))
 

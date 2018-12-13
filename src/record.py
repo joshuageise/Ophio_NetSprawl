@@ -31,4 +31,5 @@ class Record:
     def toCompat(self):
         dict = self.toDict()
         dict["_id"] = str(dict["_id"])
+        dict["parentId"] = str(dict["parentId"])
         return dict
