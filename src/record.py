@@ -27,3 +27,8 @@ class Record:
         if self.id != None:
             dict["_id"] = self.id
         return dict
+
+    def toCompat(self):
+        dict = self.toDict()
+        dict["_id"] = str(dict["_id"])
+        return dict
