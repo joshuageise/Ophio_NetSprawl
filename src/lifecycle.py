@@ -281,9 +281,8 @@ def main():
                 "hosts_exploited" : hostsExploited,
                 "host_collection": [record.toCompat() for record in hostCollection],
                 "strategy_weights_id" : str(strategyWeights["_id"])
-
             }
-
+            
             with open("Reports/Report_{}.json".format(timestamp), "w") as reportFile:
                 reportFile.write(json.dumps(report))
 
