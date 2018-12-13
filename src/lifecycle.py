@@ -279,7 +279,7 @@ def main():
                 "root_ip" : rootHost.interfaces,
                 "hosts_found" : len(hostCollection),
                 "hosts_exploited" : hostsExploited,
-                "host_collection": hostCollection,
+                "host_collection": record.toDict() for record in hostCollection,
                 "strategy_weights_id" : strategyWeights["_id"]
 
             }
