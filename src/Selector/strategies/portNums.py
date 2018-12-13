@@ -42,9 +42,9 @@ class PortNumStrategy(Strategy):
         # format port numbers to str for compatibility
         weights = self.weights
         formatted = {}
-        for exploit in weights.keys:
-            formatted[exploit] = {} 
-            for port_num in weights[exploit].keys:
+        for exploit in weights.keys():
+            formatted[exploit] = {}
+            for port_num in weights[exploit].keys():
                 formatted[exploit][str(port_num)] = weights[exploit][port_num]
 
         return {"strategy" : "port nums", "weights" : formatted}
