@@ -20,7 +20,6 @@ class PortNumStrategy(Strategy):
                     weight_sums[exploit] += self.weights[exploit].get(port_num, 0) # 0 if not present
 
         exploits = sorted(weight_sums, key=(lambda key: weight_sums[key]), reverse=True)
-        # print("port_nums search: weight_sums = {}".format(weight_sums))
         return exploits
 
     """ increases weights for each port on exploit success, decreases on failure """
@@ -38,8 +37,14 @@ class PortNumStrategy(Strategy):
                     updated = max(updated - 1, 0)
                     self.weights[exploit_name][port_num] = updated
 
-            # print("port_nums update: weights = {}".format(self.weights))
-
     """ returns a dict containing the strategy's state """
     def export(self):
-        return {"strategy" : "port nums", "weights" : self.weights}
+        # format port numbers to str for compatibility
+        weights = self.weights
+        formatted = {}
+        for exploit in weights.keys:
+            formatted[exploit] = {} 
+            for port_num in weights[exploit].keys:
+                formatted[exploit][str(port_num)] = weights[exploit][port_num]
+
+        return {"strategy" : "port nums", "weights" : formatted}
