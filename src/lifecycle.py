@@ -34,6 +34,7 @@ def main():
     enrichQueue = []
     exploitQueue = []
     postexQueue = []
+    processingCounter = 0
 
     strategy = Selector.defaultStrategy(Exploiter.getExploitNames())
 
@@ -105,8 +106,11 @@ def main():
             logger.info("Enriching...")
         while len(enrichQueue) > 0:
             hostRecord = enrichQueue.pop()
+            processingCounter += 1
+
             logger.info("Scanning host at IP {}".format(hostRecord.interfaces))
             enrichResults = json.loads(Enricher.scanHostsForInfo(hostRecord.interfaces)[0])
+
             # TODO concatenate results if there are multiple interfaces on a host
             hostRecord.os = enrichResults[0]
             hostRecord.openPorts = enrichResults[1:] if len(enrichResults) > 1 else []
@@ -133,6 +137,8 @@ def main():
             logger.info("Exploiting...")
         while len(exploitQueue) > 0:
             hostRecord = exploitQueue.pop()
+            processingCounter += 1
+
             logger.info("Profiling host at IP {}".format(hostRecord.interfaces))
             localIp = rootHost.interfaces[0]
             targetIp = hostRecord.interfaces[0]
@@ -187,6 +193,7 @@ def main():
             logger.info("Postexploiting...")
         while len(postexQueue) > 0:
             hostRecord = postexQueue.pop()
+            processingCounter += 1
             session = hostRecord.exploitStatus["msfSession"]
 
             # list interfaces from exploited host
@@ -251,11 +258,36 @@ def main():
         # alternative: run once, and restore state from DB info on startup
 
         logger.info("Reached end of cycle.")
-        # save exploiter weights to database
-        exploitTable.insert(strategy.export())
 
-        # TODO save a report (if no new data?)
+        # generate report iff new information
+        if processingCounter > 0:
+            # generate stats
+            hostsExploited = 0
+            timestamp = time.time()
+            for hostRecord in hostCollection:
+                if hostRecord.exploitStatus["statusCode"] == Record.STATUS_SUCCESS:
+                    hostsExploited += 1
 
+            # save exploiter weights to database
+            strategyWeights = strategy.export()
+            exploitTable.insert(strategyWeights)
+
+            # save a report to file
+            report = {
+                "timestamp" : timestamp,
+                "records_processed" : processingCounter,
+                "root_ip" : rootHost.interfaces,
+                "hosts_found" : len(hostCollection),
+                "hosts_exploited" : hostsExploited,
+                "host_collection": hostCollection,
+                "strategy_weights_id" : strategyWeights["_id"]
+
+            }
+            with open("Reports/Report_{}.json".format(timestamp), "w") as reportFile:
+                reportFile.write(json.dumps(report))
+
+        # reset counter for next cycle
+        processingCounter = 0
 
         # sleep if no immediate work
         if len(enrichQueue) == 0:
@@ -263,10 +295,6 @@ def main():
             time.sleep(60)
 
 
-
-        ### logging and reporting
-        # writing activities to a log file from lifecycle is a decent start
-        # function (seperate script?) to produce report on network map & status from memory state or db records
 
 if __name__ == '__main__':
     main()
